@@ -1,0 +1,26 @@
+{
+    "name": "yifysubtitles-api",
+    "version": "0.0.1",
+    "description": "Yifysubtitles.com API wrapper for NodeJS",
+    "main": "index.js",
+    "author": "vankasteelj",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/vankasteelj/yifysubtitles-api.git"
+    },
+    "dependencies": {
+        "got": "5.x.x",
+        "lodash": "4.x.x"
+    },
+    "keywords": [
+        "yifysubtitles",
+        "yify",
+        "subtitles",
+        "api",
+        "wrapper",
+        "srt",
+        "movies",
+        "films"
+    ]
+}
