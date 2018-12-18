@@ -1,111 +1,51 @@
-(function(exports) {
-    'use strict';
+const cheerio = require('cheerio');
+const got = require('got');
 
-    // modules
-    var got = require('got'),
-        _ = require('lodash'),
-        lang_map = require('./langmap.json'),
+const uri = 'http://www.yifysubtitles.com/movie-imdb';
+const downloadUri = 'http://yifysubtitles.com';
 
-        // variables
-        api_url = 'http://api.yifysubtitles.com/subs/',
-        down_url = 'http://www.yifysubtitles.com';
+const langmap = require('./langmap.json');
 
-    // format response
-    var format = function(langs) {
-        var formatted = {};
+const scrape = (imdbid) => {
+    imdbid = 'tt' + imdbid.toString().replace('tt', '');
 
-        // loop each language
-        for (var lang in langs) {
-            var langcode = lang_map[lang];
-            formatted[langcode] = [];
+    return got(`${uri}/${imdbid}`)
+        .then(res => cheerio.load(res.body))
+        .then($ => {
+            return $('tbody tr').map((i, el) => {
+                const $el = $(el);
+                const language = $el.find('.flag-cell .sub-lang').text();
 
-            // loop each result
-            _.each(langs[lang], function(obj) {
-                formatted[langcode].push({
-                    url: down_url + obj.url, // compose download url
-                    lang: langcode, // 2 letter code
-                    langName: lang.charAt(0).toUpperCase() + lang.slice(1), // full name, capitalize first letter
-                    id: obj.id.toString(),
-                    hi: Boolean(obj.hi), // 1/0 to true/false
-                    score: (5 + obj.rating) > 10 ? 10 : (5 + obj.rating) < 0 ? 0 : (5 + obj.rating) // scale from 0 to 10
-                });
-            });
-        }
-
-        return formatted;
-    };
-
-    // filter by default
-    var filter = function(subtitles, limit) {
-        if (!limit || (isNaN(limit) && ['best', 'all'].indexOf(limit.toLowerCase()) == -1)) {
-            limit = 'best';
-        }
-
-        var filtered = {};
-
-        _.each(subtitles, function(arr, lang) {
-            // sort by score
-            arr = arr.sort(function(a, b) {
-                var x = a.score,
-                    y = b.score;
-                return y < x ? -1 : y > x ? 1 : 0;
-            });
-
-            // filter
-            switch (limit.toString().toLowerCase()) {
-                case 'best':
-                    // keep only the first (best) item
-                    filtered[lang] = arr[0];
-                    break;
-                case 'all':
-                    // all good already
-                    filtered[lang] = arr;
-                    break;
-                default:
-                    // keep only n = limit items
-                    filtered[lang] = arr.slice(0, parseInt(limit));
-            };
+                return {
+                    id: $el.attr('data-id'),
+                    rating: $el.find('.rating-cell').text(),
+                    release: $el.find('.text-muted').parent().text().slice(9),
+                    hi: $el.find('.hi-subtitle')[0] ? true : false,
+                    lang: langmap[language.toLowerCase()],
+                    langName: language,
+                    url: downloadUri + $el.find('.download-cell a').attr('href').replace('subtitles/', 'subtitle/') + '.zip',
+                };
+            }).get();
         });
+};
 
-        return filtered;
-    };
+const rearrange = (subs = {}) => {
+    let subtitles = {};
 
-    // search for subtitles
-    var Yify = {
-        search: function(input) {
-            // if input is an id
-            if (typeof input !== 'object') {
-                input = {
-                    imdbid: input,
-                    limit: 'best'
-                }
-            }
+    subs = subs.sort((a,b) => b.score - a.score);
 
-            // if no input
-            if (!input || (input && !input.imdbid)) {
-                throw new Error('Need to pass an IMDB id');
-            } else if (input && typeof input.imdbid === 'number') {
-                throw new Error('Need to pass an IMDB id as a string');
-            }
+    // rearrange by language
+    for (let i in subs) {
+        let lang = subs[i].lang;
+        if (!subtitles[lang]) subtitles[lang] = Array();
+        subtitles[lang].push(subs[i]);
+    }
 
-            // format imdb id
-            var id = input.imdbid.toString().match('tt') ? input.imdbid : 'tt' + input.imdbid;
+    return Promise.resolve(subtitles);
+};
 
-            // query api
-            return got(api_url + id, {
-                json: true
-            }).then(function(response) {
-                // filter + format response
-                if (!response.body.subtitles) {
-                    return {};
-                } else {
-                    return filter(format(response.body.subs[id]), input.limit);
-                }
-            }).catch(function(error) {
-                throw error;
-            });
-        }
-    };
-
-    module.exports = Yify;
-}());
+const YifySubtitles = module.exports = {
+    search: (opts) => {
+        return scrape(opts.imdbid).then(rearrange);
+    }
+};

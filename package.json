@@ -10,8 +10,11 @@
         "url": "https://github.com/vankasteelj/yifysubtitles-api.git"
     },
     "dependencies": {
-        "got": "5.x.x",
-        "lodash": "4.x.x"
+        "got": "^9.5.0",
+        "cheerio": "^0.22.0"
+    },
+    "scripts": {
+        "test": "node ./test.js"
     },
     "keywords": [
         "yifysubtitles",

@@ -1,5 +1,4 @@
 var ysa = require('./index.js');
-var _ = require('lodash');
 
 var call_1;
 var start = Date.now(), ms1;
@@ -7,16 +6,15 @@ var imdb = '0076759', movie = 'star wars';
 
 var res = function (subtitles) {
     var total = 0;
-    _.each(subtitles, function (lang) {
-        total += lang.length;
-    });
+    for (let i in subtitles) {
+        total += subtitles[i].length;
+    }
     return total;
 };
 
 /** HTTPS search **/
 ysa.search({
-    imdbid: imdb,
-    limit: 'all'
+    imdbid: imdb
 })
 .then(function (subtitles) {
     ms1 = Date.now() - start;
