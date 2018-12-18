@@ -1,6 +1,6 @@
 {
     "name": "yifysubtitles-api",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "Yifysubtitles.com API wrapper for NodeJS",
     "main": "index.js",
     "author": "vankasteelj",
