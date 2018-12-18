@@ -1,3 +1,6 @@
+# DEPRECATED
+the api url is down. This module won't work
+
 # yifysubtitles-api
 **[YifySubtitles.com](http://www.yifysubtitles.com) API wrapper for download subtitles, written in NodeJS.**
 
